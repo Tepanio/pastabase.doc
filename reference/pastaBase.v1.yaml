@@ -1,0 +1,1033 @@
+openapi: 3.0.0
+info:
+  title: pastaBase
+  version: '1.0'
+  description: |-
+    Servidor Rest en PHP para E-Commerce
+    El mismo cuenta con Usuarios, Articulos y Pedidos.
+    El servidor maneja su seguridad mediante Bearer Token.
+    Tambien contiene servicio de Mail , para verificacion y reseteo de password de usuarios.
+    Al igual las confirmaciones de los pedidos.
+
+    El frontEnd se desarollo en REACT.
+
+
+
+    En el caso de que algo fallara la api retorna 401 en el estado del fetch.
+servers:
+  - url: 'http://localhost:8080/api'
+paths:
+  /login:
+    post:
+      summary: Login
+      tags: []
+      responses:
+        '200':
+          description: 'Devuelve el token correspondiente, el mismo se utiliza para poder manipular todo lo referido al usuario'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  expires_in:
+                    type: integer
+                  admin:
+                    type: integer
+              examples:
+                example:
+                  value:
+                    token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTU5MzgxMDA3MywiZXhwIjoxNTkzODEzNjczLCJuYmYiOjE1OTM4MTAwNzMsImp0aSI6IjJSazNPWWpiT056eWFqUFkiLCJzdWIiOiJ0aW5jaG9yaW4iLCJwcnYiOiIwYjBjZjUwYWYxMjNkODUwNmUxNmViYTdjYjY3NjI5NzRkYTNhYzNhIn0.WXHFeh7rQK0iSFys0A1Z5kDez8ymPfwC9w_grIN_CD0
+                    expires_in: 3600
+                    admin: 0
+      operationId: post-login
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+            examples:
+              example:
+                value:
+                  username: admin
+                  password: admin
+        description: ''
+      description: Permite a los Usuarios Loguearse
+  /logout:
+    post:
+      summary: LogOut
+      tags: []
+      responses:
+        '200':
+          description: OK
+      operationId: post-logout
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          required: true
+      description: Se realiza el Logout mediante el token
+  /productos:
+    get:
+      summary: GetProductos
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    nombre:
+                      type: string
+                    descripcion:
+                      type: string
+                    precio:
+                      type: integer
+                    deleted_at:
+                      type:
+                        - string
+                        - 'null'
+              examples:
+                Productos:
+                  value:
+                    - id: 1
+                      nombre: Papas
+                      descripcion: ''
+                      precio: 99
+                      deleted_at: null
+                    - id: 2
+                      nombre: boñato
+                      descripcion: ''
+                      precio: 9
+                      deleted_at: null
+      operationId: get-productos
+      parameters: []
+      description: |
+        Devolvera todos los productos que se encuentren en la base de datos
+    post:
+      summary: NewProducto
+      tags: []
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nombre:
+                    type: string
+                  descripcion:
+                    type: string
+                  precio:
+                    type: string
+                  id:
+                    type: integer
+              examples:
+                Producto Creado:
+                  value:
+                    nombre: Ravioles
+                    descripcion: ''
+                    precio: 79
+                    id: 5
+      operationId: post-productos
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+      description: Permite agregar un producto al sistema
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                descripcion:
+                  type: string
+                precio:
+                  type: string
+              required:
+                - nombre
+                - descripcion
+                - precio
+            examples:
+              Agregar Producto:
+                value:
+                  nombre: Ravioles
+                  descripcion: ''
+                  precio: 79
+        description: NO se debe especificar la id del producto ya que la misma es Auto Incremental
+  /usuarios/carrito:
+    get:
+      summary: GetCarrito
+      tags: []
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    nombre:
+                      type: string
+                    descripcion:
+                      type: string
+                    precio:
+                      type: number
+                    deleted_at:
+                      type:
+                        - string
+                        - 'null'
+              examples:
+                Example:
+                  value:
+                    - id: 2
+                      nombre: boñato
+                      descripcion: ''
+                      precio: 9
+                      deleted_at: null
+                      cantidad: 99
+                    - id: 5
+                      nombre: Ravioles
+                      descripcion: ''
+                      precio: 79
+                      deleted_at: null
+                      cantidad: 123
+      operationId: get-usuarios-carrito
+      description: Retorna todos los productos del carrito
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+          required: true
+    post:
+      summary: AddProductoCarrito
+      operationId: post-usuarios-carrito
+      responses:
+        '201':
+          description: Devuelve todos los productos que contiene el carrito
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    nombre:
+                      type: string
+                    descripcion:
+                      type: string
+                    precio:
+                      type: number
+                    deleted_at:
+                      type:
+                        - string
+                        - 'null'
+                    cantidad:
+                      type: integer
+              examples:
+                example:
+                  value:
+                    - id: 1
+                      nombre: Papas
+                      descripcion: ''
+                      precio: 99
+                      deleted_at: null
+                      cantidad: 33
+                    - id: 2
+                      nombre: boñato
+                      descripcion: ''
+                      precio: 9
+                      deleted_at: null
+                      cantidad: 99
+                    - id: 5
+                      nombre: Ravioles
+                      descripcion: ''
+                      precio: 79
+                      deleted_at: null
+                      cantidad: 123
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  producto_id:
+                    type: string
+                  cantidad:
+                    type: string
+                required:
+                  - producto_id
+                  - cantidad
+            examples:
+              example:
+                value:
+                  - producto_id: 1
+                    cantidad: 33
+      description: Permitira agregar productos al carrito
+    put:
+      summary: ModProductoCarrito
+      operationId: put-usuarios-carrito
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    nombre:
+                      type: string
+                    descripcion:
+                      type: string
+                    precio:
+                      type: number
+                    deleted_at:
+                      type:
+                        - string
+                        - 'null'
+                    cantidad:
+                      type: integer
+              examples:
+                example:
+                  value:
+                    - id: 1
+                      nombre: Papas
+                      descripcion: ''
+                      precio: 99
+                      deleted_at: null
+                      cantidad: 3
+                    - id: 2
+                      nombre: boñato
+                      descripcion: ''
+                      precio: 9
+                      deleted_at: null
+                      cantidad: 99
+                    - id: 5
+                      nombre: Ravioles
+                      descripcion: ''
+                      precio: 79
+                      deleted_at: null
+                      cantidad: 123
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                producto_id:
+                  type: string
+                cantidad:
+                  type: string
+              required:
+                - producto_id
+                - cantidad
+            examples:
+              example:
+                value:
+                  producto_id: 1
+                  cantidad: 3
+        description: Permite modificar la cantidad de un producto en el carrito
+      description: Modifica un producto en el carrito
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+          required: true
+  '/usuarios/carrito/{producto_id}':
+    parameters:
+      - schema:
+          type: string
+        name: producto_id
+        in: path
+        required: true
+    delete:
+      summary: DeleteProductoCarrito
+      tags: []
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    nombre:
+                      type: string
+                    precio:
+                      type: number
+                    deleted_at:
+                      type:
+                        - string
+                        - 'null'
+                    cantidad:
+                      type: integer
+              examples:
+                example:
+                  value:
+                    - id: 2
+                      nombre: boñato
+                      descripcion: ''
+                      precio: 9
+                      deleted_at: null
+                      cantidad: 99
+                    - id: 5
+                      nombre: Ravioles
+                      descripcion: ''
+                      precio: 79
+                      deleted_at: null
+                      cantidad: 123
+      operationId: delete-usuarios-carrito-producto_id
+      description: Elimina un producto del carrito
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+          required: true
+  /usuarios/carrito/pagar:
+    put:
+      summary: PagarCarrito
+      tags: []
+      responses:
+        '201':
+          description: Changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  usuario_username:
+                    type: string
+                  estado:
+                    type: string
+              examples:
+                example:
+                  value:
+                    id: 2
+                    usuario_username: tinchorin
+                    estado: pendiente
+      operationId: put-usuarios-carrito-pagar
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+          required: true
+      description: Cambia un pedido de estado carrito a pendiente
+  /pedidos:
+    get:
+      summary: GetPedidos
+      tags: []
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    usuario_username:
+                      type: string
+                    estado:
+                      type: string
+                    productos:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        nombre:
+                          type: string
+                        descripcion:
+                          type: string
+                        deleted_at:
+                          type:
+                            - string
+                            - 'null'
+                        cantidad:
+                          type: integer
+                    factura:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        pedido_id:
+                          type: integer
+                        total:
+                          type: string
+      operationId: get-pedidos
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: username
+          description: Filtra por Usuario
+        - schema:
+            type: string
+          in: query
+          name: estado
+          description: Filtra por Estado
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+      description: |-
+        Devuelve todos los pedidos
+        Los mismos se filtran mediante Query
+        Trae todos los productos, inclusive los que se encuentran como "Eliminados" ya que la baja de los mismos el logica
+  '/pedidos/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: GetPedido
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    usuario_username:
+                      type: string
+                    productos:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          nombre:
+                            type: string
+                          descripcion:
+                            type: string
+                          precio:
+                            type: number
+                          deleted_at:
+                            type:
+                              - string
+                              - 'null'
+                          cantidad:
+                            type: integer
+                    estado:
+                      type: string
+                    factura:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        pedido_id:
+                          type: integer
+                        total:
+                          type: number
+              examples:
+                example:
+                  value:
+                    - id: 2
+                      usuario_username: tinchorin
+                      estado: pago
+                      productos:
+                        - id: 1
+                          nombre: Papas
+                          descripcion: ''
+                          precio: 99
+                          deleted_at: null
+                          cantidad: 1
+                        - id: 2
+                          nombre: boñato
+                          descripcion: ''
+                          precio: 9
+                          deleted_at: null
+                          cantidad: 99
+                        - id: 5
+                          nombre: Ravioles
+                          descripcion: ''
+                          precio: 79
+                          deleted_at: null
+                          cantidad: 123
+                      factura:
+                        id: 2
+                        pedido_id: 2
+                        total: '9.00'
+      operationId: get-pedidos-id
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: token
+          required: true
+          description: Bearer Token
+      description: |-
+        Devuelve el pedido especificado en la url
+        Trae todos los productos, inclusive los que se encuentran como "Eliminados" ya que la baja de los mismos el logica
+        Y su respectiva factura en el caso de tenerla
+    put:
+      summary: Mod Pedido
+      tags: []
+      operationId: put-pedidos-id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                estado:
+                  type: string
+            examples:
+              example:
+                value:
+                  estado: pago
+        description: El estado nuevo se puede enviar tanto por Query como por JSON
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: estado
+          description: Estado al que se cambiara
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+          required: true
+      description: |-
+        Se encarga de cambiar el estado de los pedidos.
+        Los controles correspondientes se realizan en el front.
+        En el caso de que un pedido pasara a estar en Estado = Pago , se enviara una notificacion mediante mail al usuario.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  usuario_username:
+                    type: string
+                  estado:
+                    type: string
+                  factura:
+                    type:
+                      - object
+                      - 'null'
+                    properties:
+                      id:
+                        type: integer
+                      pedido_id:
+                        type: integer
+                      total:
+                        type: number
+              examples:
+                example:
+                  value:
+                    id: 2
+                    usuario_username: tinchorin
+                    estado: pago
+                    factura:
+                      id: 2
+                      pedido_id: 2
+                      total: '9.00'
+    delete:
+      summary: Delete Pedido
+      tags: []
+      responses:
+        '204':
+          description: No Content
+      operationId: delete-pedidos-id
+      description: Elimina el pedido especificado por url
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+          required: true
+  '/pedidos/{id}/productos/{id_producto}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: id_producto
+        in: path
+        required: true
+    delete:
+      summary: Delete Producto Pedido
+      tags: []
+      responses:
+        '201':
+          description: 'Al eliminar el producto devolvera un array con todos los productos que aun quedan en el pedido en el caso de haber '
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    nombre:
+                      type: string
+                    descipcion:
+                      type: string
+                    precio:
+                      type: number
+                    deleted_at:
+                      type:
+                        - string
+                        - 'null'
+                    cantidad:
+                      type: integer
+              examples:
+                example:
+                  value:
+                    - id: 5
+                      nombre: Ravioles
+                      descripcion: ''
+                      precio: 79
+                      deleted_at: null
+                      cantidad: 123
+                    - id: 1
+                      nombre: Papas
+                      descripcion: ''
+                      precio: 99
+                      deleted_at: null
+                      cantidad: 1
+      operationId: delete-pedidos-id-productos-id_producto
+      description: Se eliminara el producto especificado por url
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+          required: true
+    put:
+      summary: EditCant Producto Pedido
+      tags: []
+      responses:
+        '201':
+          description: 'Luego de modificar la cantidad de dicho producto, devuelve un array con todos los productos que contiene el pedido'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    nombre:
+                      type: string
+                    descripcion:
+                      type: string
+                    precio:
+                      type: number
+                    deleted_at:
+                      type:
+                        - string
+                        - 'null'
+                    cantidad:
+                      type: integer
+              examples:
+                example:
+                  value:
+                    - id: 1
+                      nombre: Papas
+                      descripcion: ''
+                      precio: 99
+                      deleted_at: null
+                      cantidad: 1
+                    - id: 2
+                      nombre: boñato
+                      descripcion: ''
+                      precio: 9
+                      deleted_at: null
+                      cantidad: 9999
+                    - id: 5
+                      nombre: Ravioles
+                      descripcion: ''
+                      precio: 79
+                      deleted_at: null
+                      cantidad: 123
+      operationId: put-pedidos-id-productos-id_producto
+      description: Modifica la cantidad de producto en el carrito
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cantidad:
+                  type: integer
+              required:
+                - cantidad
+            examples:
+              example:
+                value:
+                  cantidad: '9999'
+        description: Se debe enviar la nueva cantidad de dicho producto
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          required: true
+          description: Bearer Token
+  '/pedidos/{id}/productos':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    post:
+      summary: Add in Pedido
+      tags: []
+      responses: {}
+      operationId: post-pedidos-id-productos
+      description: Permitira al administrador agregar un producto a un pedido
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                product_id:
+                  type: integer
+              required:
+                - product_id
+            examples:
+              example:
+                value:
+                  - id: 1
+                    nombre: Papas
+                    descripcion: ''
+                    precio: 99
+                    deleted_at: null
+                    cantidad: 1
+                  - id: 2
+                    nombre: boñato
+                    descripcion: ''
+                    precio: 9
+                    deleted_at: null
+                    cantidad: 99
+                  - id: 5
+                    nombre: Ravioles
+                    descripcion: ''
+                    precio: 79
+                    deleted_at: null
+                    cantidad: 123
+        description: 'Se envia el ID del producto a agregar, se agrega por default cantidad = 1'
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+          required: true
+  '/productos/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    put:
+      summary: ModProducto
+      tags: []
+      responses:
+        '201':
+          description: Devolvera todo el objeto ya modificado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nombre:
+                    type: string
+                  descripcion:
+                    type: string
+                  precio:
+                    type: number
+                  deleted_at:
+                    type: string
+              examples:
+                Return:
+                  value:
+                    id: 1
+                    nombre: Papas
+                    descripcion: ''
+                    precio: 99
+                    deleted_at: null
+      operationId: put-productos-id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                descrpicion:
+                  type: string
+                precio:
+                  type: number
+            examples:
+              Example:
+                value:
+                  nombre: Papas
+        description: |-
+          Se puede enviar por JSON cualquiera de los atributos a modificar. 
+          Pueden ser nombre, descripcion y precio. 
+          Pueden enviarse mas de uno a ser modificado a la vez
+          Pero simpre al menos uno
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: token
+          description: Bearer Token
+          required: true
+    delete:
+      summary: DeleteProducto
+      tags: []
+      responses:
+        '204':
+          description: No Content
+      operationId: delete-productos-id
+      description: Elimina un producto de manera LOGICA de la base de datos
+  /usuarios:
+    post:
+      summary: CrearUsuarios
+      tags: []
+      responses:
+        '200':
+          description: |-
+            Devuelve el correspondiente token de dicha persona
+            En el momento que es creado el usuario , se le envia un mail para que verifique dicho E-mail y pueda operar correctamente en la app
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  expires_in:
+                    type: string
+              examples:
+                example:
+                  value:
+                    token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC91c3VhcmlvcyIsImlhdCI6MTU5MzgxMjExMywiZXhwIjoxNTkzODE1NzEzLCJuYmYiOjE1OTM4MTIxMTMsImp0aSI6Im5TWGRnWkJlZ0VnVGNjN2QiLCJzdWIiOiJhcmEiLCJwcnYiOiIwYjBjZjUwYWYxMjNkODUwNmUxNmViYTdjYjY3NjI5NzRkYTNhYzNhIn0.GUNLVaSFQFrnYlFLgwKM1ferlXCY3NM3MTznXL7mc6c
+                    expires_in: 3600
+      operationId: post-usuarios
+      description: Permite crear un Usuario
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                email:
+                  type: string
+                nombre:
+                  type: string
+                apellido:
+                  type: string
+                direccion:
+                  type: string
+                telefono:
+                  type: string
+            examples:
+              example:
+                value:
+                  username: ara
+                  password: '88888888'
+                  email: ara.luz@gmail.com
+                  nombre: Araceli
+                  apellido: Laluz
+                  direccion: Casa
+                  telefono: '092222000'
+        description: Se deben agregar todos los datos basicos del usuario
+components:
+  schemas: {}
+  securitySchemes: {}
